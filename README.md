@@ -1,1 +1,1 @@
-Graph based Wen Intelligence
+Graph based Web Intelligence
