@@ -1,7 +1,6 @@
-<<<<<<< HEAD
-Graph based Web Intelligence
-=======
 # Graphitti
+
+
 
 Graph-native web intelligence: crawl → chunk + extract triples (local NLTK
 NLP pipeline, no LLM calls) → consistency check → Neo4j knowledge graph →
