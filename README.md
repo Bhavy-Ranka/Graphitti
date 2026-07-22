@@ -1,7 +1,5 @@
 # Graphitti
 
-
-
 Graph-native web intelligence: crawl → chunk + extract triples (local NLTK
 NLP pipeline, no LLM calls) → consistency check → Neo4j knowledge graph →
 LangChain query routing → multi-strategy retrieval (dense / BM25 / graph /
@@ -12,50 +10,45 @@ Streamlit dashboard.
 <img width="1693" height="1129" alt="Screenshot from 2026-07-21 14-38-12" src="https://github.com/user-attachments/assets/8286d838-76f5-432d-ad86-99759504443d" />
 <img width="1693" height="1129" alt="Screenshot from 2026-07-21 15-12-18" src="https://github.com/user-attachments/assets/7b33a11c-063d-4bbc-8d4d-d4b3fd203504" />
 
+## Project Structure
 
-## Architecture
-
-```
+```text
 graphitti/
-  config.py               env-driven settings (.env), incl. EXTRACTION_BACKEND
-  crawling/
-    crawler.py             Playwright BFS crawler
-  extraction/
-    chunking.py             sentence-boundary semantic chunking
-    schemas.py               Pydantic Triple / TripleList (used by the optional Groq backend)
-    nlp_pipeline.py           default backend: local NLTK pipeline (POS tag -> NER ->
-                              shallow NP/VP/PP grammar -> SVO/passive/PP triple rules ->
-                              pronoun coref -> confidence scoring). No API calls, no rate limits.
-    triple_extractor.py       dispatches to nlp_pipeline.py (EXTRACTION_BACKEND=nltk, default)
-                              or the original LCEL chain (EXTRACTION_BACKEND=groq)
-    direction.py               type-based subject/object direction correction
-    entity_resolution.py        alias merging ("Kohli" -> "Virat Kohli")
-  graph/
-    store.py                 GraphStore interface: Neo4jGraphStore (+ InMemoryGraphStore, used by evaluation/ablation.py)
-    loader.py                 Neo4j UNWIND/MERGE batch loader, batch-tagged rollback
-    consistency.py            conflict detection -> contested edges (no silent merge)
-  retrieval/
-    text_index.py             crawled pages -> addressable chunk corpus
-    bm25.py                    SparseBM25Strategy (rank_bm25)
-    dense.py                   DenseVectorStrategy (sentence-transformers, TF-IDF fallback)
-    graph_retrieval.py          GraphTraversalStrategy (multi-hop + 1-hop), EntityCentricStrategy
-    base.py                     shared interface, HybridFusionStrategy (RRF), registry factory
-  routing/
-    schemas.py                 Pydantic IntentClassification / DecomposedQuery
-    chains.py                   LCEL chains: classify / rephrase / decompose (ChatGroq)
-    query_router.py             QueryRouter, RoutingLogger, heuristic fallback if no Groq key
-  orchestration/
-    orchestrator.py             LangGraph StateGraph: routing -> retrieval -> synthesis
-                                -> faithfulness -> (replan | integrity) -> END
-    synthesis_chain.py           LCEL chain that writes the cited prose answer
-  api/
-    app.py                      FastAPI: /ingest /reset /query /graph /graph/view /health
-    static/graph.html            live graph viz (vis-network via CDN)
-  cli/
-    main.py                     CLI: crawl -> extract -> load -> Neo4j (+ --rollback)
-  evaluation/
-    ablation.py                  per-strategy precision/recall/latency + routed comparison
-  streamlit_app.py              Streamlit dashboard: ingest, single-graph view, Q&A
+├── config.py                # Centralized environment settings (.env)
+├── crawling/
+│   └── crawler.py           # Playwright BFS web crawler
+├── extraction/
+│   ├── chunking.py          # Sentence-boundary semantic chunking
+│   ├── schemas.py           # Pydantic schemas for extracted triples
+│   ├── nlp_pipeline.py      # Local NLTK extraction pipeline (POS, NER, SVO)
+│   ├── triple_extractor.py  # Backend dispatcher (NLTK vs. Groq LLM)
+│   ├── direction.py         # Subject/Object direction normalization
+│   └── entity_resolution.py # Entity alias resolution & merging
+├── graph/
+│   ├── store.py             # Neo4j & In-Memory GraphStore implementations
+│   ├── loader.py            # Neo4j UNWIND/MERGE batch loader with rollback
+│   └── consistency.py       # Graph conflict detection & contested edge tagging
+├── retrieval/
+│   ├── text_index.py        # Addressable chunk index for raw page text
+│   ├── bm25.py              # Sparse BM25 retrieval strategy
+│   ├── dense.py             # Vector search (Sentence-Transformers / TF-IDF)
+│   ├── graph_retrieval.py   # Multi-hop & entity-centric graph traversal
+│   └── base.py              # HybridFusionStrategy (RRF) & retrieval registry
+├── routing/
+│   ├── schemas.py           # Intent classification & query decomposition schemas
+│   ├── chains.py            # LCEL chains for classification and rephrasing
+│   └── query_router.py      # Main router with heuristic fallback support
+├── orchestration/
+│   ├── orchestrator.py      # LangGraph state machine (Routing → Retrieval → Synthesis)
+│   └── synthesis_chain.py   # Final answer generation chain with provenance
+├── api/
+│   ├── app.py               # FastAPI REST endpoints
+│   └── static/graph.html    # Interactive graph visualizer (vis-network)
+├── cli/
+│   └── main.py              # CLI tool for crawling, extracting, and loading
+├── evaluation/
+│   └── ablation.py          # Precision/Recall/Latency benchmarking suite
+└── streamlit_app.py         # Streamlit interactive UI dashboard
 ```
 
 ## One graph at a time
@@ -87,7 +80,7 @@ intent-classification confidence is below `confidence_floor` (0.55).
 ## Extraction backend
 
 Triple extraction defaults to a **local NLTK pipeline** (`EXTRACTION_BACKEND=nltk`,
-or just leave it unset) -- POS tagging, named-entity recognition, a shallow
+or just leave it unset) — POS tagging, named-entity recognition, a shallow
 NP/VP/PP grammar, and rule-based SVO / passive-voice / prepositional-phrase
 triple extraction, with lightweight pronoun resolution and heuristic
 confidence scoring. It runs entirely on your machine: no API calls, no
@@ -98,7 +91,7 @@ afterwards).
 Set `EXTRACTION_BACKEND=groq` in `.env` to use the original LangChain +
 ChatGroq LLM extractor instead (higher quality on ambiguous/complex
 sentences, at the cost of API latency and Groq's rate limits). Query
-routing (`routing/chains.py`) and orchestration still use Groq either way --
+routing (`routing/chains.py`) and orchestration still use Groq either way —
 this switch only affects triple extraction.
 
 ## Running it
