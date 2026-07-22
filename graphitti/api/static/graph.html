@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Graphitti — Live Graph</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/vis-network.min.js"></script>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: #0b0e14; color: #e6e6e6; }
+    #bar { padding: 10px 16px; background: #11151f; border-bottom: 1px solid #232838; display: flex; gap: 12px; align-items: center; }
+    #bar button { background: #232838; color: #e6e6e6; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+    #network { width: 100vw; height: calc(100vh - 46px); }
+    .legend { font-size: 12px; opacity: 0.7; }
+    .contested-dot { display: inline-block; width: 10px; height: 10px; background: #e04c4c; border-radius: 50%; margin-right: 4px; }
+  </style>
+</head>
+<body>
+  <div id="bar">
+    <strong>Graphitti</strong>
+    <button onclick="loadGraph()">Refresh</button>
+    <span class="legend"><span class="contested-dot"></span>contested edge</span>
+    <span id="source" class="legend"></span>
+    <span id="stats" class="legend"></span>
+  </div>
+  <div id="network"></div>
+  <script>
+    async function loadGraph() {
+      const res = await fetch('/graph');
+      const data = await res.json();
+      const nodes = new vis.DataSet(data.nodes.map(n => ({
+        id: n.id, label: n.id, color: '#4c7fe0',
+      })));
+      const edges = new vis.DataSet(data.edges.map((e, i) => ({
+        id: i, from: e.source, to: e.target, label: e.predicate,
+        color: e.contested ? '#e04c4c' : '#6b7280',
+        font: { size: 10, color: '#9aa4b2' },
+      })));
+      const container = document.getElementById('network');
+      new vis.Network(container, { nodes, edges }, {
+        physics: { stabilization: true, barnesHut: { gravitationalConstant: -3000 } },
+        edges: { arrows: 'to', smooth: { type: 'dynamic' } },
+        nodes: { shape: 'dot', size: 14 },
+      });
+      document.getElementById('stats').textContent =
+        `${data.nodes.length} entities, ${data.edges.length} relations`;
+      document.getElementById('source').textContent =
+        data.source_url ? `source: ${data.source_url}` : 'no graph ingested yet';
+    }
+    loadGraph();
+  </script>
+</body>
+</html>

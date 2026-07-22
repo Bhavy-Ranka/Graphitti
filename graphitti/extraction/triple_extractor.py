@@ -9,6 +9,14 @@ from graphitti.extraction.entity_resolution import resolve_entity_aliases
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("triple_extractor")
 
+<<<<<<< HEAD
+=======
+
+# ---------------------------------------------------------------------------
+# Backend: local NLTK pipeline (default) -- no API calls, no rate limits.
+# ---------------------------------------------------------------------------
+
+>>>>>>> 798fdaf (final project)
 def _extract_chunk_nltk(chunk_text: str) -> list[dict]:
     from graphitti.extraction.nlp_pipeline import extract_triples_from_chunk
     try:
@@ -17,6 +25,14 @@ def _extract_chunk_nltk(chunk_text: str) -> list[dict]:
         log.warning(f"NLTK extraction failed for chunk, skipping: {e}")
         return []
 
+<<<<<<< HEAD
+=======
+
+# ---------------------------------------------------------------------------
+# Backend: Groq LLM via LangChain (opt-in, EXTRACTION_BACKEND=groq)
+# ---------------------------------------------------------------------------
+
+>>>>>>> 798fdaf (final project)
 _groq_chain = None
 
 _GROQ_SYSTEM_PROMPT = """You are an information extraction engine. Given a passage of web text, \
@@ -76,6 +92,14 @@ def _extract_chunk(chunk_text: str) -> list[dict]:
         return _extract_chunk_groq(chunk_text)
     return _extract_chunk_nltk(chunk_text)
 
+<<<<<<< HEAD
+=======
+
+# ---------------------------------------------------------------------------
+# Public API (backend-agnostic)
+# ---------------------------------------------------------------------------
+
+>>>>>>> 798fdaf (final project)
 def extract_triples_from_page(page: dict) -> list[dict]:
     chunks = semantic_chunk(page["text"])
     all_triples = []

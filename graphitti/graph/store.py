@@ -1,14 +1,29 @@
 from __future__ import annotations
+<<<<<<< HEAD
 import difflib
 from abc import ABC, abstractmethod
 import networkx as nx
 from graphitti.config import NEO4J_PASSWORD, NEO4J_URI, NEO4J_USE
+=======
+
+import difflib
+from abc import ABC, abstractmethod
+
+import networkx as nx
+
+from graphitti.config import NEO4J_PASSWORD, NEO4J_URI, NEO4J_USER
+
+>>>>>>> 798fdaf (final project)
 
 class GraphStore(ABC):
     @abstractmethod
     def match_entities(self, query: str, top_k: int = 3) -> list[str]:
         pass
+<<<<<<< HEAD
       
+=======
+
+>>>>>>> 798fdaf (final project)
     @abstractmethod
     def neighbors(self, entity_name: str) -> list[dict]:
         pass
@@ -35,11 +50,23 @@ def _fuzzy_match(name_pool: list[str], query: str, top_k: int) -> list[str]:
             break
     return list(candidates)[:top_k]
 
+<<<<<<< HEAD
 class InMemoryGraphStore(GraphStore):
     def __init__(self):
         self.g = nx.MultiDiGraph()
     def clear(self):
         self.g = nx.MultiDiGraph()
+=======
+
+class InMemoryGraphStore(GraphStore):
+
+    def __init__(self):
+        self.g = nx.MultiDiGraph()
+
+    def clear(self):
+        self.g = nx.MultiDiGraph()
+
+>>>>>>> 798fdaf (final project)
     def load_triples(self, triples: list[dict], batch_id: str | None = None):
         for t in triples:
             s, o = t["subject"], t["object"]
@@ -103,7 +130,13 @@ class InMemoryGraphStore(GraphStore):
                   for u, v, d in self.g.edges(data=True)]
         return {"nodes": nodes, "edges": edges}
 
+<<<<<<< HEAD
 class Neo4jGraphStore(GraphStore):
+=======
+
+class Neo4jGraphStore(GraphStore):
+
+>>>>>>> 798fdaf (final project)
     def __init__(self, driver=None):
         if driver is None:
             from neo4j import GraphDatabase

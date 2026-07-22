@@ -1,0 +1,41 @@
+# --- Crawling ---
+playwright
+
+# --- Triple extraction (extraction/triple_extractor.py) ---
+# Default backend (EXTRACTION_BACKEND=nltk, or unset) is a fully local,
+# rule-based NLP pipeline -- see extraction/nlp_pipeline.py. No API calls,
+# no rate limits, no per-token latency.
+nltk
+
+# --- LLM orchestration (LangChain) ---
+# Query understanding (routing/chains.py) is still an LCEL chain:
+# prompt | ChatGroq | structured parser. Triple extraction can optionally
+# fall back to the same pattern via EXTRACTION_BACKEND=groq.
+# Multi-agent orchestration (orchestration/orchestrator.py) is a LangGraph
+# StateGraph rather than a hand-rolled loop.
+langchain-core
+langchain-groq
+langgraph
+pydantic>=2
+
+# --- Graph store ---
+neo4j
+networkx           # in-memory graph store / offline demo
+
+# --- Retrieval ---
+rank_bm25          # sparse_bm25
+scikit-learn       # dense_vector (TF-IDF fallback)
+# sentence-transformers   # optional: uncomment for real embeddings (needs HF download)
+
+# --- Product surface ---
+fastapi
+uvicorn[standard]
+
+# --- Shared ---
+python-dotenv
+requests
+
+# --- Frontend ---
+streamlit
+
+# After pip install, also run once: playwright install chromium
