@@ -1,35 +1,3 @@
-<<<<<<< HEAD
-=======
-"""
-Custom rule-based / statistical NLP extraction pipeline.
-
-Replaces the LLM (Groq) triple extractor with a local NLTK pipeline so that
-extraction is not bottlenecked by remote API latency or rate limits.
-
-Stages, per sentence:
-  1. Tokenize + POS tag (nltk averaged perceptron tagger).
-  2. Named-entity recognition (nltk maxent NE chunker), with adjacent
-     same-label spans merged, plus a regex date/number detector.
-  3. Shallow constituency chunking (custom RegexpParser grammar) into
-     NP / VP / PP chunks.
-  4. Lightweight pronoun resolution against recently mentioned entities.
-  5. Pattern-based triple extraction over the flattened chunk sequence:
-       - active SVO:            NP  VP  NP
-       - passive SVO (by-agent): NP  VP(passive)  PP(by NP)  -> agent/patient swapped
-       - copula + PP:            NP  VP(copula)  PP           -> subj, verb_prep, PP-np
-       - role-of copula:         NP  is/was  DT? ROLE  PP(of NP) -> PP-np, role, subj
-       - verb + PP (no object):  NP  VP  PP                    -> subj, verb_prep, PP-np
-       - trailing PP after obj:  NP  VP  NP  PP                -> obj, verb_prep, PP-np
-       - conjunctions on either side of NP (X and Y) fan out into multiple triples
-  6. Heuristic confidence scoring (hedge words, pattern type, passive/active).
-
-Output shape matches the schema previously produced by the Groq extractor:
-dicts with subject/subject_type/predicate/object/object_type/confidence
-(plus source metadata added by the caller), so this module is a drop-in
-replacement -- `extract_triples_from_page` keeps the same signature.
-"""
-
->>>>>>> 798fdaf (final project)
 import logging
 import re
 
@@ -39,14 +7,6 @@ from nltk.stem import WordNetLemmatizer
 from nltk.tree import Tree
 
 log = logging.getLogger("nlp_pipeline")
-<<<<<<< HEAD
-=======
-
-# ---------------------------------------------------------------------------
-# One-time NLTK resource bootstrap
-# ---------------------------------------------------------------------------
-
->>>>>>> 798fdaf (final project)
 _REQUIRED_NLTK_RESOURCES = [
     ("tokenizers/punkt_tab", "punkt_tab"),
     ("tokenizers/punkt", "punkt"),
@@ -66,8 +26,6 @@ def ensure_nltk_data() -> None:
 
 
 def ensure_nltk_data() -> None:
-    """Download required NLTK corpora/models if not already present. Idempotent."""
->>>>>>> 798fdaf (final project)
     global _bootstrapped
     if _bootstrapped:
         return
@@ -83,14 +41,6 @@ def ensure_nltk_data() -> None:
 
 
 _lemmatizer = WordNetLemmatizer()
-
-<<<<<<< HEAD
-=======
-# ---------------------------------------------------------------------------
-# Shallow chunk grammar
-# ---------------------------------------------------------------------------
-
->>>>>>> 798fdaf (final project)
 _GRAMMAR = r"""
   NP: {<NNP><CD><,>?<CD>}
   NP: {<DT|PRP\$>?<JJ.*>*<NN.*|NNP.*|PRP>+<CD>?(<,><NNP.*|CD>+)*(<CC><DT>?<JJ.*>*<NN.*|NNP.*>+)?}
@@ -98,13 +48,9 @@ _GRAMMAR = r"""
   PP: {<IN|TO><NP>}
   VP: {<MD>?<RB>*<VB.*>+<RP>?}
 """
-<<<<<<< HEAD
 _BE_FORMS = {"is", "are", "was", "were", "be", "been", "being", "'s", "'re"}
-=======
-
 _BE_FORMS = {"is", "are", "was", "were", "be", "been", "being", "'s", "'re"}
 
->>>>>>> 798fdaf (final project)
 _HEDGE_WORDS = re.compile(
     r"\b(may|might|could|allegedly|reportedly|reputedly|apparently|possibly|"
     r"rumor(?:ed)?|claims?|claimed|suggests?|suggested|appears? to|seem(?:s|ed)? to|"
@@ -124,10 +70,7 @@ _DATE_RE = re.compile(
     rf"|^(?:{_MONTHS})\.?\s+\d{{4}}$",
     re.I,
 )
-<<<<<<< HEAD
-=======
 
->>>>>>> 798fdaf (final project)
 _ORG_SUFFIXES = re.compile(
     r"\b(inc\.?|corp\.?|corporation|company|co\.?|ltd\.?|llc|university|"
     r"institute|foundation|agency|department|ministry|association|group|"
@@ -135,14 +78,6 @@ _ORG_SUFFIXES = re.compile(
     re.I,
 )
 
-<<<<<<< HEAD
-=======
-# Statistical NER frequently mistags well-known single-word organization
-# names (no "Inc"/"Corp" suffix to key off of) as GPE/PERSON/nothing when
-# there isn't enough sentence context. This small, easily-extended gazetteer
-# is a cheap accuracy lever for exactly that class of error -- add to it
-# freely for your own domain/corpus.
->>>>>>> 798fdaf (final project)
 _KNOWN_ORGS = {
     "google", "apple", "microsoft", "amazon", "meta", "facebook", "netflix",
     "spacex", "tesla", "openai", "anthropic", "ibm", "intel", "nvidia",
@@ -173,14 +108,6 @@ _PRONOUNS = {
 _PERSON_PRONOUNS = {"he", "him", "his", "she", "her", "hers"}
 _PLURAL_PRONOUNS = {"they", "them", "their", "theirs"}
 
-<<<<<<< HEAD
-=======
-
-# ---------------------------------------------------------------------------
-# NE span detection (adjacent same-label merge)
-# ---------------------------------------------------------------------------
-
->>>>>>> 798fdaf (final project)
 def _ne_spans(tags: list[tuple[str, str]]) -> dict[tuple[int, int], str]:
     tree = nltk.ne_chunk(tags)
     spans: dict[tuple[int, int], str] = {}
@@ -203,15 +130,7 @@ def _ne_spans(tags: list[tuple[str, str]]) -> dict[tuple[int, int], str]:
             prev_label = None
             idx += 1
     return spans
-
-<<<<<<< HEAD
-=======
-
-# ---------------------------------------------------------------------------
-# Chunk flattening: (label, text, token_start, token_end)
-# ---------------------------------------------------------------------------
-
->>>>>>> 798fdaf (final project)
+  
 def _flatten_chunks(chunk_tree: Tree) -> list[dict]:
     chunks = []
     idx = 0
@@ -238,10 +157,6 @@ def _clean_np_text(text: str) -> str:
     text = text.strip(" ,")
     return text
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 798fdaf (final project)
 def _guess_type(np_chunk: dict, ne_spans: dict[tuple[int, int], str]) -> str:
     if np_chunk["text"].strip().lower() in _KNOWN_ORGS:
         return "Organization"
@@ -253,12 +168,6 @@ def _guess_type(np_chunk: dict, ne_spans: dict[tuple[int, int], str]) -> str:
         if overlap > 0:
             label_overlap[label] = label_overlap.get(label, 0) + overlap
     if label_overlap:
-<<<<<<< HEAD
-=======
-        # e.g. a comma-joined NP like "Hawthorne, California" may be covered
-        # by two separate (non-adjacent, due to the comma) GPE spans -- take
-        # whichever label covers the most of the NP overall.
->>>>>>> 798fdaf (final project)
         best_label = max(label_overlap, key=label_overlap.get)
         return _NE_LABEL_MAP.get(best_label, "Other")
 
@@ -398,7 +307,7 @@ class _EntityMemory:
 
 
 def _resolve_np_text(np_chunk: dict, etype: str, memory: "_EntityMemory") -> tuple[str, bool]:
-<<<<<<< HEAD
+
 =======
     """Returns (resolved_text, was_pronoun)."""
 >>>>>>> 798fdaf (final project)
@@ -410,19 +319,9 @@ def _resolve_np_text(np_chunk: dict, etype: str, memory: "_EntityMemory") -> tup
         return text, True
     return _clean_np_text(text), False
 
-<<<<<<< HEAD
+_chunker = RegexpParser(_GRAMMAR)
 _chunker = RegexpParser(_GRAMMAR)
 
-=======
-
-# ---------------------------------------------------------------------------
-# Per-sentence extraction
-# ---------------------------------------------------------------------------
-
-_chunker = RegexpParser(_GRAMMAR)
-
-
->>>>>>> 798fdaf (final project)
 def _extract_from_sentence(sentence: str, memory: "_EntityMemory") -> list[dict]:
     tokens = word_tokenize(sentence)
     if len(tokens) < 3:
@@ -431,18 +330,13 @@ def _extract_from_sentence(sentence: str, memory: "_EntityMemory") -> list[dict]
     ne_spans = _ne_spans(tags)
     tree = _chunker.parse(tags)
     chunks = _flatten_chunks(tree)
-<<<<<<< HEAD
     for c in chunks:
         if c["label"] == "NP":
             c["etype"] = _guess_type(c, ne_spans)
-=======
-
-    # annotate NPs with entity type up front
     for c in chunks:
         if c["label"] == "NP":
             c["etype"] = _guess_type(c, ne_spans)
 
->>>>>>> 798fdaf (final project)
     triples: list[dict] = []
     i = 0
     n = len(chunks)
@@ -486,20 +380,13 @@ def _extract_from_sentence(sentence: str, memory: "_EntityMemory") -> list[dict]
         k = j + 1
         subj_variants = _split_conjunction(subj_np)
         subj_resolved = [_resolve_np_text(s, subj_np.get("etype", "Other"), memory) for s in subj_variants]
-<<<<<<< HEAD
-=======
 
-        # register subjects in memory (non-pronoun mentions)
->>>>>>> 798fdaf (final project)
         for s, (text, was_pron) in zip(subj_variants, subj_resolved):
             if not was_pron:
                 memory.update(text, subj_np.get("etype", "Other"))
 
         handled = False
-<<<<<<< HEAD
-=======
 
->>>>>>> 798fdaf (final project)
         if k < n and chunks[k]["label"] == "PP" and passive:
             pp = chunks[k]
             prep = pp["tokens"][0].lower()
@@ -519,11 +406,7 @@ def _extract_from_sentence(sentence: str, memory: "_EntityMemory") -> list[dict]
         if not handled and k < n and chunks[k]["label"] == "NP":
             obj_np = chunks[k]
             obj_variants = _split_conjunction(obj_np)
-<<<<<<< HEAD
-=======
 
-            # role-of copula pattern: NP is/was (DT)? ROLE  PP(of NP)
->>>>>>> 798fdaf (final project)
             role_key = obj_np["text"].lower()
             role_head = next((w for r, w in _ROLE_WORDS.items() if r in role_key), None)
             if pred_base == "is" and role_head and k + 1 < n and chunks[k + 1]["label"] == "PP" \
@@ -548,11 +431,7 @@ def _extract_from_sentence(sentence: str, memory: "_EntityMemory") -> list[dict]
                             memory.update(o_text, o_type)
                 handled = True
                 k += 1
-<<<<<<< HEAD
-=======
 
-            # trailing PP right after the object -> secondary triple anchored on object
->>>>>>> 798fdaf (final project)
             if k < n and chunks[k]["label"] == "PP":
                 pp = chunks[k]
                 prep = pp["tokens"][0].lower()
@@ -567,10 +446,7 @@ def _extract_from_sentence(sentence: str, memory: "_EntityMemory") -> list[dict]
                 k += 1
 
         elif not handled and k < n and chunks[k]["label"] == "PP":
-<<<<<<< HEAD
-=======
-            # copula/intransitive + PP, e.g. "is headquartered in X", "was born in Y"
->>>>>>> 798fdaf (final project)
+
             while k < n and chunks[k]["label"] == "PP":
                 pp = chunks[k]
                 prep = pp["tokens"][0].lower()
@@ -590,19 +466,13 @@ def _extract_from_sentence(sentence: str, memory: "_EntityMemory") -> list[dict]
 
     return triples
 
-<<<<<<< HEAD
 def normalize_entity_types(triples: list[dict]) -> list[dict]:
     from collections import Counter
-=======
+
 
 def normalize_entity_types(triples: list[dict]) -> list[dict]:
-    """Per-sentence NER can flip-flop on the same surface form (e.g. 'Apple'
-    tagged GPE in one sentence, unrecognized in another). Reconcile by
-    majority vote across all mentions of the same entity string within the
-    batch, so a single page ends up with one consistent type per entity."""
     from collections import Counter
 
->>>>>>> 798fdaf (final project)
     votes: dict[str, Counter] = {}
     for t in triples:
         for role in ("subject", "object"):
@@ -611,24 +481,13 @@ def normalize_entity_types(triples: list[dict]) -> list[dict]:
             votes.setdefault(name, Counter())[etype] += 1
 
     majority = {name: counter.most_common(1)[0][0] for name, counter in votes.items()}
-<<<<<<< HEAD
-=======
 
->>>>>>> 798fdaf (final project)
     for t in triples:
         t["subject_type"] = majority.get(t["subject"], t.get("subject_type", "Other"))
         t["object_type"] = majority.get(t["object"], t.get("object_type", "Other"))
     return triples
 
-<<<<<<< HEAD
-=======
 
-# ---------------------------------------------------------------------------
-# Public API (mirrors the previous Groq-backed extractor's contract)
-# ---------------------------------------------------------------------------
-
-
->>>>>>> 798fdaf (final project)
 def extract_triples_from_chunk(chunk_text: str) -> list[dict]:
     """Extract raw triples (no source metadata) from a single text chunk."""
     ensure_nltk_data()
