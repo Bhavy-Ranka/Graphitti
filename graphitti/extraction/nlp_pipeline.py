@@ -1,12 +1,12 @@
 import logging
 import re
-
 import nltk
 from nltk import RegexpParser, pos_tag, sent_tokenize, word_tokenize
 from nltk.stem import WordNetLemmatizer
 from nltk.tree import Tree
 
 log = logging.getLogger("nlp_pipeline")
+
 _REQUIRED_NLTK_RESOURCES = [
     ("tokenizers/punkt_tab", "punkt_tab"),
     ("tokenizers/punkt", "punkt"),
@@ -20,12 +20,10 @@ _REQUIRED_NLTK_RESOURCES = [
 ]
 
 _bootstrapped = False
-<<<<<<< HEAD
-def ensure_nltk_data() -> None:
-=======
 
 
 def ensure_nltk_data() -> None:
+    """Download required NLTK corpora/models if not already present. Idempotent."""
     global _bootstrapped
     if _bootstrapped:
         return
@@ -48,7 +46,7 @@ _GRAMMAR = r"""
   PP: {<IN|TO><NP>}
   VP: {<MD>?<RB>*<VB.*>+<RP>?}
 """
-_BE_FORMS = {"is", "are", "was", "were", "be", "been", "being", "'s", "'re"}
+
 _BE_FORMS = {"is", "are", "was", "were", "be", "been", "being", "'s", "'re"}
 
 _HEDGE_WORDS = re.compile(
@@ -130,7 +128,7 @@ def _ne_spans(tags: list[tuple[str, str]]) -> dict[tuple[int, int], str]:
             prev_label = None
             idx += 1
     return spans
-  
+
 def _flatten_chunks(chunk_tree: Tree) -> list[dict]:
     chunks = []
     idx = 0
@@ -157,6 +155,7 @@ def _clean_np_text(text: str) -> str:
     text = text.strip(" ,")
     return text
 
+
 def _guess_type(np_chunk: dict, ne_spans: dict[tuple[int, int], str]) -> str:
     if np_chunk["text"].strip().lower() in _KNOWN_ORGS:
         return "Organization"
@@ -176,7 +175,6 @@ def _guess_type(np_chunk: dict, ne_spans: dict[tuple[int, int], str]) -> str:
         return "Date"
     if _ORG_SUFFIXES.search(text):
         return "Organization"
-    # proper noun (capitalized, not sentence-initial-only) -> unknown named entity
     words = [w for w in np_chunk["tokens"] if w not in (",",)]
     if words and all(w[0].isupper() for w in words if w.isalpha()):
         return "Other"
@@ -184,10 +182,6 @@ def _guess_type(np_chunk: dict, ne_spans: dict[tuple[int, int], str]) -> str:
 
 
 def _split_conjunction(np_chunk: dict) -> list[dict]:
-<<<<<<< HEAD
-=======
-    """Split an NP like 'rockets and spacecraft' into separate entities."""
->>>>>>> 798fdaf (final project)
     tokens = np_chunk["tokens"]
     if "and" not in tokens and "&" not in tokens:
         return [np_chunk]
@@ -207,12 +201,6 @@ def _split_conjunction(np_chunk: dict) -> list[dict]:
         out.append({**np_chunk, "tokens": part, "text": " ".join(part)})
     return out
 
-<<<<<<< HEAD
-_IRREGULAR_PRESENT = {
-    "has": "have", "does": "do", "goes": "go", "is": "is", "'s": "is",
-}
-def _normalize_verb_surface(word: str, tag: str) -> str:
-=======
 
 _IRREGULAR_PRESENT = {
     "has": "have", "does": "do", "goes": "go", "is": "is", "'s": "is",
@@ -220,13 +208,6 @@ _IRREGULAR_PRESENT = {
 
 
 def _normalize_verb_surface(word: str, tag: str) -> str:
-    """Light de-inflection: only smooth 3rd-person-singular present tense
-    (VBZ), e.g. 'develops' -> 'develop', 'says' -> 'say'. Every other form
-    (VBD, VBN, VBG, base VB) is already a good normalized predicate surface
-    on its own ('founded', 'born', 'headquartered', 'released', 'acquired')
-    -- lemmatizing those to a bare infinitive would turn 'founded' into
-    'found' and 'born' into 'bear', which is worse, not better."""
->>>>>>> 798fdaf (final project)
     lower = word.lower()
     if tag == "VBZ":
         if lower in _IRREGULAR_PRESENT:
@@ -239,13 +220,8 @@ def _normalize_verb_surface(word: str, tag: str) -> str:
             return lower[:-1]
     return lower
 
-<<<<<<< HEAD
-def _predicate_from_vp(vp_tokens: list[str], vp_tags: list[str], is_passive: bool) -> tuple[str, bool]:
-=======
 
 def _predicate_from_vp(vp_tokens: list[str], vp_tags: list[str], is_passive: bool) -> tuple[str, bool]:
-    """Return (predicate_base, negated)."""
->>>>>>> 798fdaf (final project)
     negated = bool(_NEGATION.search(" ".join(vp_tokens)))
     pairs = [(t, g) for t, g in zip(vp_tokens, vp_tags)
              if t.lower() not in _BE_FORMS and t.lower() != "not" and not t.lower().endswith("n't")]
@@ -255,19 +231,13 @@ def _predicate_from_vp(vp_tokens: list[str], vp_tags: list[str], is_passive: boo
     base = _normalize_verb_surface(head_word, head_tag)
     return base, negated
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 798fdaf (final project)
 def _is_passive(vp_tokens: list[str], vp_tags: list[str]) -> bool:
     has_be = any(t.lower() in _BE_FORMS for t in vp_tokens)
     has_vbn = "VBN" in vp_tags
     return has_be and has_vbn
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 798fdaf (final project)
 def _confidence(base: float, sentence: str, negated: bool) -> float:
     score = base
     if _HEDGE_WORDS.search(sentence):
@@ -276,14 +246,6 @@ def _confidence(base: float, sentence: str, negated: bool) -> float:
         score -= 0.1
     return max(0.05, min(0.95, round(score, 2)))
 
-<<<<<<< HEAD
-=======
-
-# ---------------------------------------------------------------------------
-# Lightweight pronoun resolution
-# ---------------------------------------------------------------------------
-
->>>>>>> 798fdaf (final project)
 class _EntityMemory:
     def __init__(self):
         self.last_person = None
@@ -307,10 +269,7 @@ class _EntityMemory:
 
 
 def _resolve_np_text(np_chunk: dict, etype: str, memory: "_EntityMemory") -> tuple[str, bool]:
-
-=======
     """Returns (resolved_text, was_pronoun)."""
->>>>>>> 798fdaf (final project)
     text = np_chunk["text"].strip()
     if text.lower() in _PRONOUNS:
         resolved = memory.resolve(text.lower())
@@ -319,7 +278,6 @@ def _resolve_np_text(np_chunk: dict, etype: str, memory: "_EntityMemory") -> tup
         return text, True
     return _clean_np_text(text), False
 
-_chunker = RegexpParser(_GRAMMAR)
 _chunker = RegexpParser(_GRAMMAR)
 
 def _extract_from_sentence(sentence: str, memory: "_EntityMemory") -> list[dict]:
@@ -330,9 +288,7 @@ def _extract_from_sentence(sentence: str, memory: "_EntityMemory") -> list[dict]
     ne_spans = _ne_spans(tags)
     tree = _chunker.parse(tags)
     chunks = _flatten_chunks(tree)
-    for c in chunks:
-        if c["label"] == "NP":
-            c["etype"] = _guess_type(c, ne_spans)
+
     for c in chunks:
         if c["label"] == "NP":
             c["etype"] = _guess_type(c, ne_spans)
@@ -446,7 +402,6 @@ def _extract_from_sentence(sentence: str, memory: "_EntityMemory") -> list[dict]
                 k += 1
 
         elif not handled and k < n and chunks[k]["label"] == "PP":
-
             while k < n and chunks[k]["label"] == "PP":
                 pp = chunks[k]
                 prep = pp["tokens"][0].lower()
@@ -466,11 +421,12 @@ def _extract_from_sentence(sentence: str, memory: "_EntityMemory") -> list[dict]
 
     return triples
 
-def normalize_entity_types(triples: list[dict]) -> list[dict]:
-    from collections import Counter
-
 
 def normalize_entity_types(triples: list[dict]) -> list[dict]:
+    """Per-sentence NER can flip-flop on the same surface form (e.g. 'Apple'
+    tagged GPE in one sentence, unrecognized in another). Reconcile by
+    majority vote across all mentions of the same entity string within the
+    batch, so a single page ends up with one consistent type per entity."""
     from collections import Counter
 
     votes: dict[str, Counter] = {}
@@ -486,7 +442,6 @@ def normalize_entity_types(triples: list[dict]) -> list[dict]:
         t["subject_type"] = majority.get(t["subject"], t.get("subject_type", "Other"))
         t["object_type"] = majority.get(t["object"], t.get("object_type", "Other"))
     return triples
-
 
 def extract_triples_from_chunk(chunk_text: str) -> list[dict]:
     """Extract raw triples (no source metadata) from a single text chunk."""
