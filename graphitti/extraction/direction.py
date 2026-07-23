@@ -23,10 +23,7 @@ def normalize_direction(triple: dict) -> dict:
 
     expected_subject_types, expected_object_types = expectation
     subj_t, obj_t = triple.get("subject_type"), triple.get("object_type")
-<<<<<<< HEAD
-=======
 
->>>>>>> 798fdaf (final project)
     as_is_ok = subj_t in expected_subject_types and obj_t in expected_object_types
     reversed_ok = subj_t in expected_object_types and obj_t in expected_subject_types
 
