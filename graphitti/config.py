@@ -18,13 +18,6 @@ GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 GROQ_TEMPERATURE = float(os.getenv("GROQ_TEMPERATURE", "0.1"))
 CHUNK_MAX_WORDS = int(os.getenv("CHUNK_MAX_WORDS", "180"))
 
-<<<<<<< HEAD
-=======
-# Triple extraction backend: "nltk" (default) runs entirely locally, no API
-# calls, no rate limits, no per-token latency -- see
-# graphitti/extraction/nlp_pipeline.py. Set to "groq" to use the original
-# LangChain + ChatGroq LLM extractor instead.
->>>>>>> 798fdaf (final project)
 EXTRACTION_BACKEND = os.getenv("EXTRACTION_BACKEND", "nltk").lower()
 
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
