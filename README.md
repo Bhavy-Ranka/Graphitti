@@ -44,8 +44,6 @@ graphitti/
 ├── api/
 │   ├── app.py               # FastAPI REST endpoints
 │   └── static/graph.html    # Interactive graph visualizer (vis-network)
-├── cli/
-│   └── main.py              # CLI tool for crawling, extracting, and loading
 ├── evaluation/
 │   └── ablation.py          # Precision/Recall/Latency benchmarking suite
 └── streamlit_app.py         # Streamlit interactive UI dashboard
