@@ -113,14 +113,3 @@ streamlit run graphitti/streamlit_app.py
 Open the Streamlit URL it prints, paste a URL in the sidebar, click
 **Crawl & Ingest**, then use the **Knowledge Graph** tab to see that
 entity's graph and the **Ask a Question** tab to query it.
-
-Other entry points:
-
-```bash
-# CLI: crawl -> extract -> load, with rollback
-python -m graphitti.cli.main https://docs.example.com --depth 2 --pages 20
-python -m graphitti.cli.main --rollback <batch_id>
-
-# Retrieval ablation report
-python -m graphitti.evaluation.ablation [test_queries.json]
-```
