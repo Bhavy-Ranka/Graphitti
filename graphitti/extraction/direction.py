@@ -16,11 +16,6 @@ PREDICATE_TYPE_EXPECTATIONS: dict[str, tuple[set[str], set[str]]] = {
     "director": ({"Product", "Concept"}, {"Person"}),
     "capital_of": ({"Location"}, {"Location"}),
 }
-
-<<<<<<< HEAD
-=======
-
->>>>>>> 798fdaf (final project)
 def normalize_direction(triple: dict) -> dict:
     expectation = PREDICATE_TYPE_EXPECTATIONS.get(triple.get("predicate", ""))
     if not expectation:
