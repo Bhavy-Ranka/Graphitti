@@ -17,6 +17,20 @@ def _same_domain(url: str, root_domain: str) -> bool:
     except Exception:
         return False
 
+_NON_ARTICLE_PREFIXES = (
+    "Special:", "Portal:", "Wikipedia:", "Help:", "Talk:", "User:",
+    "User_talk:", "Category:", "File:", "Template:", "Template_talk:",
+    "Module:", "MediaWiki:", "Draft:", "TimedText:",
+)
+
+
+def _is_non_article_wiki_page(url: str) -> bool:
+    path = urlparse(url).path
+    segment = path.rsplit("/", 1)[-1]
+    if segment == "Main_Page":
+        return True
+    return segment.startswith(_NON_ARTICLE_PREFIXES)
+
 
 def _clean_url(base: str, href: str) -> str | None:
     if not href or href.startswith(("mailto:", "tel:", "javascript:", "#")):
@@ -25,13 +39,16 @@ def _clean_url(base: str, href: str) -> str | None:
     parsed = urlparse(absolute)
     if parsed.scheme not in ("http", "https"):
         return None
-    return parsed._replace(fragment="").geturl()
+    cleaned = parsed._replace(fragment="").geturl()
+    if _is_non_article_wiki_page(cleaned):
+        return None
+    return cleaned
 
 
 async def _extract_page(page, url: str, depth: int) -> dict:
     title = await page.title()
 
-    text = await page.evaluate(
+    result = await page.evaluate(
         """() => {
             const kill = [
                 'script', 'style', 'nav', 'footer', 'noscript', 'svg',
@@ -42,17 +59,29 @@ async def _extract_page(page, url: str, depth: int) -> dict:
                 'ol.references', '.reflist', '.mw-references-wrap',
                 'sup.reference', '.citation', '[role="doc-endnotes"]',
                 '[role="doc-bibliography"]', '.navbox', '.catlinks',
+                // sidebar / chrome elements that aren't <nav>/<footer> tags
+                // on every site (e.g. MediaWiki's Vector skin panel) but are
+                // still just site furniture, not article content — these are
+                // what was leaking Main_Page / Wikipedia:Contents /
+                // Special:Random / Portal:Current_events style links into
+                // the crawl queue instead of article-body links.
+                '#mw-panel', '#mw-head', '#footer', '#siteSub',
+                '.vector-header', '.vector-page-toolbar', '.mw-jump-link',
+                '[role="banner"]', '[role="navigation"]', '[role="complementary"]',
             ];
             const clone = document.body.cloneNode(true);
             kill.forEach(tag => clone.querySelectorAll(tag).forEach(el => el.remove()));
-            return clone.innerText;
+
+            // Links come from the SAME cleaned clone as the text, not the
+            // raw document, so nav/sidebar/footer links never get queued.
+            const links = Array.from(clone.querySelectorAll('a[href]'))
+                .map(e => e.getAttribute('href'));
+
+            return { text: clone.innerText, links };
         }"""
     )
-    text = " ".join(text.split())
-
-    links = await page.eval_on_selector_all(
-        "a[href]", "els => els.map(e => e.getAttribute('href'))"
-    )
+    text = " ".join(result["text"].split())
+    links = result["links"]
 
     meta_description = ""
     try:
@@ -121,7 +150,6 @@ async def crawl(
 
     log.info(f"Crawl finished: {len(pages)} pages")
     return pages
-
 
 def crawl_sync(start_url: str, max_depth: int = MAX_DEPTH, max_pages: int = MAX_PAGES) -> list[dict]:
     return asyncio.run(crawl(start_url, max_depth, max_pages))
