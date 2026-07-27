@@ -95,13 +95,11 @@ this switch only affects triple extraction.
 ## Running it
 
 ```bash
+git clone https://github.com/Bhavy-Ranka/Graphitti.git
 pip install -r requirements.txt --break-system-packages   # or a venv, drop the flag
 playwright install chromium
-cp .env.example .env   # NEO4J_PASSWORD required; GROQ_API_KEY only needed for
-                        # query routing/orchestration, or EXTRACTION_BACKEND=groq
 
-# 1. Backend API (needs a running Neo4j instance; GROQ_API_KEY optional unless
-#    you want LLM-backed query routing/orchestration)
+# 1. Backend API 
 uvicorn graphitti.api.app:app --reload
 
 # 2. Streamlit dashboard, in a second terminal
