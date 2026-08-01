@@ -21,7 +21,7 @@ graphitti/
 │   ├── chunking.py          # Sentence-boundary semantic chunking
 │   ├── schemas.py           # Pydantic schemas for extracted triples
 │   ├── nlp_pipeline.py      # Local NLTK extraction pipeline (POS, NER, SVO)
-│   ├── triple_extractor.py  # Backend dispatcher (NLTK vs. Groq LLM)
+│   ├── triple_extractor.py  # Local NLTK triple extraction pipeline
 │   ├── direction.py         # Subject/Object direction normalization
 │   └── entity_resolution.py # Entity alias resolution & merging
 ├── graph/
@@ -75,22 +75,14 @@ the entity you just crawled.
 strategies (`STRATEGY_MAP`), falling back to `hybrid_fusion` whenever
 intent-classification confidence is below `confidence_floor` (0.55).
 
-## Extraction backend
+## Extraction pipeline
 
-Triple extraction defaults to a **local NLTK pipeline** (`EXTRACTION_BACKEND=nltk`,
-or just leave it unset) — POS tagging, named-entity recognition, a shallow
+Triple extraction is powered exclusively by a **local NLTK pipeline** — POS tagging, named-entity recognition, a shallow
 NP/VP/PP grammar, and rule-based SVO / passive-voice / prepositional-phrase
 triple extraction, with lightweight pronoun resolution and heuristic
-confidence scoring. It runs entirely on your machine: no API calls, no
-per-request latency, no rate limits, and it works with no `GROQ_API_KEY` at
-all. The first run downloads a few small NLTK corpora automatically (cached
+confidence scoring. It runs entirely on your machine: no external LLM extraction calls, no
+per-request API latency, no rate limits, and zero API costs for extraction. The first run downloads a few small NLTK corpora automatically (cached
 afterwards).
-
-Set `EXTRACTION_BACKEND=groq` in `.env` to use the original LangChain +
-ChatGroq LLM extractor instead (higher quality on ambiguous/complex
-sentences, at the cost of API latency and Groq's rate limits). Query
-routing (`routing/chains.py`) and orchestration still use Groq either way —
-this switch only affects triple extraction.
 
 ## Running it
 
