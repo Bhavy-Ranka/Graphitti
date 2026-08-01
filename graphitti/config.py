@@ -1,13 +1,9 @@
 import os
-
 from dotenv import load_dotenv
-
 load_dotenv()
-
 
 def _bool(name: str, default: str = "false") -> bool:
     return os.getenv(name, default).lower() in ("1", "true", "yes")
-
 
 MAX_DEPTH = int(os.getenv("MAX_DEPTH", "2"))
 MAX_PAGES = int(os.getenv("MAX_PAGES", "20"))
@@ -17,8 +13,6 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 GROQ_TEMPERATURE = float(os.getenv("GROQ_TEMPERATURE", "0.1"))
 CHUNK_MAX_WORDS = int(os.getenv("CHUNK_MAX_WORDS", "180"))
-
-EXTRACTION_BACKEND = os.getenv("EXTRACTION_BACKEND", "nltk").lower()
 
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
