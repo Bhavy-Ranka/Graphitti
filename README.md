@@ -7,6 +7,7 @@ hybrid RRF) → LangGraph multi-agent orchestration → cited answer →
 Streamlit dashboard.
 
 <img width="1693" height="1129" alt="Screenshot from 2026-07-21 14-36-12" src="https://github.com/user-attachments/assets/aeb3dca1-c12b-4dc6-a6b2-42783135ce4b" />
+<img width="1599" height="1006" alt="image" src="https://github.com/user-attachments/assets/9a0a73af-65ce-43ac-931f-b5b4d9314a92" />
 <img width="1693" height="1129" alt="Screenshot from 2026-07-21 14-38-12" src="https://github.com/user-attachments/assets/8286d838-76f5-432d-ad86-99759504443d" />
 <img width="1693" height="1129" alt="Screenshot from 2026-07-21 15-12-18" src="https://github.com/user-attachments/assets/7b33a11c-063d-4bbc-8d4d-d4b3fd203504" />
 
