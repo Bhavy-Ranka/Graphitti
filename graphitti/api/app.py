@@ -66,6 +66,9 @@ def ingest(req: IngestRequest):
     if not pages:
         raise HTTPException(400, "crawl returned no pages")
 
+    triples = extract_triples_from_pages(pages)
+    triples, conflicts = mark_contested(triples)
+
     if req.reset:
         _state["text_store"].clear()
         loader = GraphLoader()
@@ -75,9 +78,6 @@ def ingest(req: IngestRequest):
             loader.close()
 
     _state["text_store"].add_pages(pages)
-
-    triples = extract_triples_from_pages(pages)
-    triples, conflicts = mark_contested(triples)
 
     loader = GraphLoader()
     try:
@@ -141,9 +141,16 @@ def graph():
             "MATCH (s:Entity)-[r:REL]->(o:Entity) "
             "RETURN s.name AS source, o.name AS target, r.predicate AS predicate, r.contested AS contested"
         )]
+        if not _state["last_ingest_url"]:
+            src_row = session.run(
+                "MATCH ()-[r:REL]->() WHERE r.source_url IS NOT NULL AND r.source_url <> '' "
+                "RETURN r.source_url AS url LIMIT 1"
+            ).single()
+            if src_row:
+                _state["last_ingest_url"] = src_row["url"]
     return {"nodes": nodes, "edges": edges, "source_url": _state["last_ingest_url"]}
 
 
 @app.get("/graph/view", response_class=HTMLResponse)
 def graph_view():
-    return (_STATIC_DIR / "graph.html").read_text()
+    return (_STATIC_DIR / "graph.html").read_text(encoding="utf-8")
