@@ -88,13 +88,13 @@ class RoutingLogger:
         self.path = path
 
     def log(self, decision: dict):
-        with open(self.path, "a") as f:
-            f.write(json.dumps(decision) + "\n")
+        with open(self.path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(decision, ensure_ascii=False) + "\n")
 
     def read_all(self):
         if not os.path.exists(self.path):
             return []
-        with open(self.path) as f:
+        with open(self.path, encoding="utf-8") as f:
             return [json.loads(line) for line in f if line.strip()]
 
 
