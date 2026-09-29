@@ -13,12 +13,21 @@ class SparseBM25Strategy(RetrievalStrategy):
 
     def __init__(self, store: TextChunkStore):
         self.store = store
-        corpus_tokens = [_tokenize(t) for t in store.texts] or [[]]
-        self.bm25 = BM25Okapi(corpus_tokens)
+        corpus_tokens = [_tokenize(t) for t in store.texts]
+        if any(corpus_tokens):
+            try:
+                self.bm25 = BM25Okapi(corpus_tokens)
+            except ZeroDivisionError:
+                self.bm25 = None
+        else:
+            self.bm25 = None
 
     def retrieve(self, query: str, top_k: int = 5) -> list[str]:
-        if not self.store.ids:
+        if not self.store.ids or self.bm25 is None:
             return []
-        scores = self.bm25.get_scores(_tokenize(query))
+        tokens = _tokenize(query)
+        if not tokens:
+            return []
+        scores = self.bm25.get_scores(tokens)
         ranked = sorted(zip(self.store.ids, scores), key=lambda x: x[1], reverse=True)
         return [cid for cid, score in ranked[:top_k] if score > 0]
