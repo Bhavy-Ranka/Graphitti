@@ -72,8 +72,8 @@ with st.sidebar:
     st.subheader("Ingest a page")
     ingest_url = st.text_input("URL to crawl", placeholder="https://en.wikipedia.org/wiki/...")
     col_depth, col_pages = st.columns(2)
-    depth = col_depth.number_input("Depth", min_value=0, max_value=5, value=2)
-    pages = col_pages.number_input("Max pages", min_value=1, max_value=100, value=20)
+    depth = col_depth.number_input("Depth", min_value=0, max_value=5, value=0, help="0 = this page only, 1 = direct links")
+    pages = col_pages.number_input("Max pages", min_value=1, max_value=100, value=1, help="Number of pages to crawl. Start with 1 for fast extraction (~30s).")
 
     st.caption(
         "Every ingest replaces the graph with the crawl of this URL only. "
@@ -92,11 +92,11 @@ with st.sidebar:
                     st.session_state.graph_nonce = str(time.time())
                     st.session_state.chat_history = []
                     st.success(f"Graph ready for {stats['source_url']}")
+                    st.rerun()
                 except requests.HTTPError as e:
                     st.error(f"Ingest failed: {e.response.text}")
                 except requests.RequestException as e:
                     st.error(f"Could not reach backend: {e}")
-            st.rerun()
 
     if st.button("Clear graph", use_container_width=True):
         try:
@@ -106,9 +106,9 @@ with st.sidebar:
             st.session_state.graph_nonce = str(time.time())
             st.session_state.chat_history = []
             st.success("Graph cleared.")
+            st.rerun()
         except requests.RequestException as e:
             st.error(f"Could not reach backend: {e}")
-        st.rerun()
 
     if st.session_state.last_ingest_stats:
         s = st.session_state.last_ingest_stats
@@ -130,32 +130,45 @@ with tab_graph:
     refresh_col, _ = st.columns([1, 5])
     if refresh_col.button("Refresh graph"):
         st.session_state.graph_nonce = str(time.time())
+        try:
+            g = fetch_graph()
+            if g and g.get("source_url"):
+                st.session_state.current_source_url = g["source_url"]
+        except Exception:
+            pass
         st.rerun()
 
-    if not st.session_state.current_source_url:
-        st.info("Ingest a URL from the sidebar to see its graph here.")
-    else:
-        try:
-            graph_data = fetch_graph()
-        except requests.RequestException as e:
-            graph_data = None
-            st.error(f"Could not reach backend: {e}")
+    try:
+        graph_data = fetch_graph()
+    except requests.RequestException as e:
+        graph_data = None
+        st.error(f"Could not reach backend: {e}")
 
-        if graph_data is not None:
-            n_nodes = len(graph_data.get("nodes", []))
-            n_edges = len(graph_data.get("edges", []))
-            m1, m2 = st.columns(2)
-            m1.metric("Entities", n_nodes)
-            m2.metric("Relations", n_edges)
+    if graph_data is not None:
+        n_nodes = len(graph_data.get("nodes", []))
+        n_edges = len(graph_data.get("edges", []))
+        m1, m2 = st.columns(2)
+        m1.metric("Entities", n_nodes)
+        m2.metric("Relations", n_edges)
 
-            if n_nodes == 0:
-                st.warning("No entities were extracted from this page.")
-            else:
-                view_url = f"{backend_url()}/graph/view?t={st.session_state.graph_nonce}"
-                components.iframe(view_url, height=650, scrolling=False)
+        if n_nodes == 0:
+            st.info("No entities in the knowledge graph yet. Ingest a URL from the sidebar to populate the graph.")
+        else:
+            if not st.session_state.current_source_url and graph_data.get("source_url"):
+                st.session_state.current_source_url = graph_data["source_url"]
+            view_url = f"{backend_url()}/graph/view?t={st.session_state.graph_nonce}"
+            components.iframe(view_url, height=650, scrolling=False)
 
 with tab_qa:
     st.subheader("Ask a question about the ingested graph")
+
+    if not st.session_state.current_source_url:
+        try:
+            g = fetch_graph()
+            if g and g.get("nodes"):
+                st.session_state.current_source_url = g.get("source_url") or "Existing Graph"
+        except Exception:
+            pass
 
     if not st.session_state.current_source_url:
         st.info("Ingest a URL first, then ask questions about it here.")
